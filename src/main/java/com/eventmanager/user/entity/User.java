@@ -5,8 +5,8 @@ import com.eventmanager.user.enums.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
+
 
 
 @Getter
@@ -37,4 +37,7 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+
+
 }
