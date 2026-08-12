@@ -11,6 +11,7 @@ import com.eventmanager.event.enums.EventStatus;
 import com.eventmanager.event.mapper.EventMapper;
 import com.eventmanager.event.repository.EventRepository;
 import com.eventmanager.location.entity.Location;
+import com.eventmanager.notification.KafkaProducer;
 import com.eventmanager.security.CustomUserDetails;
 import com.eventmanager.user.entity.User;
 import org.junit.jupiter.api.AfterEach;
@@ -53,6 +54,9 @@ class EventServiceTest {
 
     @Mock
     private CustomUserDetails userDetails;
+
+    @Mock
+    private KafkaProducer kafkaProducer;
 
 
     private void mockCurrentUser(User user) {
@@ -413,6 +417,7 @@ class EventServiceTest {
         mockCurrentUser(organizer);
 
         Event event = new Event();
+        event.setId(1L);
         event.setOrganizer(organizer);
         event.setStatus(EventStatus.DRAFT);
 
@@ -432,6 +437,9 @@ class EventServiceTest {
         assertSame(response, result);
 
         verify(eventRepository).save(event);
+
+        verify(kafkaProducer)
+                .sendEventPublished(event.getId());
     }
 
 
