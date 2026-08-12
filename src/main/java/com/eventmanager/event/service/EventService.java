@@ -15,9 +15,12 @@ import com.eventmanager.event.mapper.EventMapper;
 import com.eventmanager.event.repository.EventRepository;
 import com.eventmanager.location.entity.Location;
 import com.eventmanager.location.repository.LocationRepository;
+import com.eventmanager.notification.KafkaProducer;
 import com.eventmanager.security.CustomUserDetails;
 import com.eventmanager.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,7 @@ public class EventService {
     private final EventMapper eventMapper;
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
+    private final KafkaProducer kafkaProducer;
 
     public void create(CreateEventRequest request){
 
@@ -92,6 +96,8 @@ public class EventService {
                 .map(eventMapper::toResponse);
     }
 
+
+    @Cacheable(value = "events", key = "#id")
     public EventResponse findById(Long id) {
 
         Event event = eventRepository.findById(id)
@@ -101,6 +107,7 @@ public class EventService {
         return eventMapper.toResponse(event);
     }
 
+    @CacheEvict(value = "events", key = "#id")
     public EventResponse update(Long id, UpdateEventRequest request){
         Event event = eventRepository.findById(id)
                 .orElseThrow(() ->
@@ -141,11 +148,12 @@ public class EventService {
         return eventMapper.toResponse(eventRepository.save(event));
     }
 
+    @CacheEvict(value = "events", key = "#id")
     public void delete(Long id) {
 
         Event event = eventRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Event not found"));
+                        new ResourceNotFoundException("Event not found"));
 
         User currentUser = getCurrentUser();
 
@@ -164,6 +172,7 @@ public class EventService {
         eventRepository.delete(event);
     }
 
+    @CacheEvict(value = "events", key = "#id")
     public EventResponse publish(Long id) {
 
         Event event = eventRepository.findById(id)
@@ -186,8 +195,14 @@ public class EventService {
 
         event.setStatus(EventStatus.PUBLISHED);
 
-        return eventMapper.toResponse(eventRepository.save(event));
+        Event savedEvent = eventRepository.save(event);
+
+        kafkaProducer.sendEventPublished(savedEvent.getId());
+
+        return eventMapper.toResponse(savedEvent);
     }
+
+    @CacheEvict(value = "events", key = "#id")
     public EventResponse cancel(Long id) {
 
         Event event = eventRepository.findById(id)
@@ -214,6 +229,8 @@ public class EventService {
         return eventMapper.toResponse(eventRepository.save(event));
     }
 
+
+    @CacheEvict(value = "events", key = "#id")
     public EventResponse closeRegistration(Long id) {
 
         Event event = eventRepository.findById(id)
@@ -239,6 +256,7 @@ public class EventService {
         return eventMapper.toResponse(eventRepository.save(event));
     }
 
+    @CacheEvict(value = "events", key = "#id")
     public EventResponse complete(Long id) {
 
         Event event = eventRepository.findById(id)
