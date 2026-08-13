@@ -5,20 +5,26 @@ import com.eventmanager.event.dto.request.EventFilterRequest;
 import com.eventmanager.event.dto.request.UpdateEventRequest;
 import com.eventmanager.event.dto.response.EventResponse;
 import com.eventmanager.event.service.EventService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import com.eventmanager.event.dto.request.EventFilterRequest;
 import org.springframework.data.domain.Page;
+import io.swagger.v3.oas.annotations.Parameter;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/events")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class EventController {
 
     private final EventService eventService;
@@ -34,7 +40,9 @@ public class EventController {
 
     @GetMapping
     public ResponseEntity<Page<EventResponse>> findAll(
-            EventFilterRequest filter,
+            @ParameterObject EventFilterRequest filter,
+            @ParameterObject
+            @PageableDefault(size = 10, sort = "startAt")
             Pageable pageable
     ) {
 

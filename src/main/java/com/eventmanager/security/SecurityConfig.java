@@ -40,11 +40,21 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception ->
+                        exception
+                                .accessDeniedHandler((request, response, e) -> {
+                                    System.out.println(
+                                            "ACCESS DENIED: " + request.getRequestURI()
+                                    );
+                                    response.setStatus(403);
+                                })
+                )
 
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 );
+
 
         return http.build();
     }
